@@ -1,9 +1,11 @@
+import pytest
 import base64
 import os
 
 os.environ['BLINKER_USE_MOCK'] = 'true'
 os.environ['BLINKER_DB_PATH'] = 'server/data/test-blinker.db'
 
+pytest.importorskip('fastapi')
 from fastapi.testclient import TestClient
 from app.main import create_app
 from app.services.ai.vision import HeuristicVisionAnalyzer
