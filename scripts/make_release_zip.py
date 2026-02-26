@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / 'dist'
 DIST.mkdir(exist_ok=True)
 OUT = DIST / 'blinker-v0.2-github-ready.zip'
-EXCLUDE_PARTS = {'.git', '.venv', 'node_modules', '__pycache__', '.pytest_cache', 'dist'}
+EXCLUDE_PARTS = {'.git', '.venv', 'venv', 'node_modules', '__pycache__', '.pytest_cache', 'dist', 'build'}
 
 with zipfile.ZipFile(OUT, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
     for path in ROOT.rglob('*'):

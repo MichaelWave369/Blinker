@@ -14,3 +14,14 @@ dist/
 **/*.png
 *.tsbuildinfo
 web/*.tsbuildinfo
+.env.*
+venv/
+build/
+*.db
+*.zip
+*.mp4
+*.png
+*.pdf
+web/node_modules/
+.DS_Store
+Thumbs.db

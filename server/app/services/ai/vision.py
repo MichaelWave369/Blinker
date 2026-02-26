@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from PIL import Image, ImageStat
+from PIL import Image, ImageStat, UnidentifiedImageError
 
 
 class VisionAnalyzer(ABC):
@@ -13,7 +13,10 @@ class HeuristicVisionAnalyzer(VisionAnalyzer):
         path = Path(image_path)
         if not path.exists():
             return {'tags': ['unknown'], 'notes': 'image_missing'}
-        img = Image.open(path).convert('L')
+        try:
+            img = Image.open(path).convert('L')
+        except (UnidentifiedImageError, OSError):
+            return {'tags': ['unknown'], 'notes': 'unreadable_image'}
         brightness = ImageStat.Stat(img).mean[0]
         tags: list[str] = []
         notes: list[str] = []
