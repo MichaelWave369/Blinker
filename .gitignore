@@ -12,3 +12,5 @@ dist/
 **/*.mp4
 **/*.pdf
 **/*.png
+*.tsbuildinfo
+web/*.tsbuildinfo
