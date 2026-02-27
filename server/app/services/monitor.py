@@ -1,20 +1,23 @@
 import asyncio
 import logging
 from sqlmodel import Session, select
-from ..db import engine
-from ..models import Camera, Clip, Event
+from ..models import Camera, Clip, Event, EventTag
 from .media_store import MediaStore
+from .rules import RuleEngine
 
 logger = logging.getLogger(__name__)
 
 
 class MonitorService:
-    def __init__(self, blink_client, analyzer, poll_seconds: int, auto_download_clips: bool):
+    def __init__(self, blink_client, analyzer, vision_analyzer, engine, poll_seconds: int, auto_download_clips: bool):
         self.blink_client = blink_client
         self.analyzer = analyzer
+        self.vision_analyzer = vision_analyzer
+        self.engine = engine
         self.poll_seconds = max(10, poll_seconds)
         self.auto_download_clips = auto_download_clips
         self.media_store = MediaStore()
+        self.rules = RuleEngine()
         self._stop = asyncio.Event()
         self._task: asyncio.Task | None = None
 
@@ -42,8 +45,9 @@ class MonitorService:
         cameras = await self.blink_client.list_cameras()
         events = await self.blink_client.list_events()
         clips = await self.blink_client.list_clips()
+        created_events = 0
 
-        with Session(engine) as session:
+        with Session(self.engine) as session:
             for cam in cameras:
                 session.merge(Camera(id=cam.id, name=cam.name, battery=cam.battery, signal=cam.signal, armed=cam.armed, last_motion=cam.last_motion))
 
@@ -69,8 +73,21 @@ class MonitorService:
                 db_evt.summary = summary
                 db_evt.tags = ','.join(tags)
                 session.add(db_evt)
+                session.flush()
+                for tag in tags:
+                    session.add(EventTag(event_id=db_evt.id, tag=tag, confidence=0.7, source='ai'))
+
+                if thumb_path:
+                    vision_result = self.vision_analyzer.analyze_image(thumb_path)
+                    for vt in vision_result.get('tags', []):
+                        session.add(EventTag(event_id=db_evt.id, tag=vt, confidence=0.5, source='rule'))
+                        tags.append(vt)
+
+                self.rules.apply(session, db_evt, tags)
+                created_events += 1
             session.commit()
+        return {'status': 'synced', 'new_events': created_events}
 
     def recent_events(self, limit: int = 10):
-        with Session(engine) as session:
+        with Session(self.engine) as session:
             return session.exec(select(Event).order_by(Event.created_at.desc()).limit(limit)).all()

@@ -32,6 +32,33 @@ class Event(SQLModel, table=True):
     clip_id: Optional[str] = Field(default=None, index=True)
     summary: Optional[str] = None
     tags: Optional[str] = None
+    important: bool = False
+
+
+class EventTag(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    event_id: str = Field(index=True)
+    tag: str = Field(index=True)
+    confidence: float = 0.0
+    source: str = 'ai'
+
+
+class Rule(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    enabled: bool = True
+    camera_id_optional: Optional[str] = Field(default=None, index=True)
+    conditions_json: str
+    actions_json: str
+
+
+class Notification(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    title: str
+    body: str
+    delivered_at: Optional[datetime] = None
+    channel: str = 'web'
 
 
 class AuthSession(SQLModel, table=True):

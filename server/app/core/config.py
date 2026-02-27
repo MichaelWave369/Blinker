@@ -1,4 +1,5 @@
 from pathlib import Path
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,7 +15,8 @@ class Settings(BaseSettings):
     blinker_auto_download_clips: bool = True
     blinker_bind_host: str = '127.0.0.1'
     blinker_port: int = 8090
-    blinker_use_mock: bool = False
+    blinker_use_mock: bool = Field(default=False, validation_alias='BLINKER_USE_MOCK')
+    blinker_version: str = '0.2.0'
 
     @property
     def db_url(self) -> str:

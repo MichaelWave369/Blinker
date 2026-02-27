@@ -1,12 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from sqlmodel import Session, select
-from ..db import engine
 from ..models import Camera
 
 router = APIRouter(prefix='/api', tags=['cameras'])
 
 
 @router.get('/cameras')
-def list_cameras():
-    with Session(engine) as session:
+def list_cameras(request: Request):
+    with Session(request.app.state.db_engine) as session:
         return session.exec(select(Camera)).all()

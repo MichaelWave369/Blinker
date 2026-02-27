@@ -1,8 +1,7 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from sqlmodel import Session, select
-from ..db import get_session
 from ..models import AuthSession
 from ..services.blink.client import PinRequiredError
 
@@ -20,17 +19,18 @@ class PinPayload(BaseModel):
 
 
 @router.post('/login')
-async def login(payload: LoginPayload, request: Request, session: Session = Depends(get_session)):
+async def login(payload: LoginPayload, request: Request):
     blink = request.app.state.blink_client
-    try:
-        result = await blink.login(payload.username, payload.password, payload.pin)
-    except PinRequiredError as exc:
-        raise HTTPException(status_code=401, detail=str(exc))
-    except ValueError as exc:
-        raise HTTPException(status_code=401, detail=str(exc))
-    token = result.get('token', 'session-token')
-    session.add(AuthSession(username=payload.username, token=token, created_at=datetime.utcnow()))
-    session.commit()
+    with Session(request.app.state.db_engine) as session:
+        try:
+            result = await blink.login(payload.username, payload.password, payload.pin)
+        except PinRequiredError as exc:
+            raise HTTPException(status_code=401, detail=str(exc))
+        except ValueError as exc:
+            raise HTTPException(status_code=401, detail=str(exc))
+        token = result.get('token', 'session-token')
+        session.add(AuthSession(username=payload.username, token=token, created_at=datetime.utcnow()))
+        session.commit()
     return {'status': 'ok'}
 
 
@@ -43,9 +43,10 @@ async def verify_pin(payload: PinPayload, request: Request):
 
 
 @router.post('/logout')
-async def logout(request: Request, session: Session = Depends(get_session)):
+async def logout(request: Request):
     await request.app.state.blink_client.logout()
-    for row in session.exec(select(AuthSession)).all():
-        session.delete(row)
-    session.commit()
+    with Session(request.app.state.db_engine) as session:
+        for row in session.exec(select(AuthSession)).all():
+            session.delete(row)
+        session.commit()
     return {'status': 'logged_out'}

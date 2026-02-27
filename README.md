@@ -1,19 +1,26 @@
-# Blinker (MVP v0.1)
+# Blinker v0.2.0
 
-Blinker is a **local-first** Blink camera monitoring app with optional AI-assisted summaries.
+Blinker is a **local-first** Blink camera monitoring app with optional AI-assisted summaries and lightweight vision tagging.
 
 ## What Blinker does
-- Connects to your Blink account via an unofficial adapter (`blinkpy` implementation scaffold + mock client).
-- Syncs cameras, motion events, and clip metadata.
-- Stores metadata in local SQLite and media in local folders.
-- Builds a timeline and dashboard UI.
-- Generates deterministic summaries by default, or optional Ollama summaries.
-- Produces a downloadable PNG status snapshot report.
+- Connects to your Blink account via an unofficial adapter (`blinkpy` implementation scaffold + mock client for tests/dev).
+- Syncs cameras, motion events, and clip metadata into local SQLite.
+- Stores clips and thumbnails under local media folders.
+- Provides timeline search (`/api/events/search`) by camera, summary text, and tags.
+- Adds local-only rules engine to mark events important and create notifications.
+- Adds lightweight vision tags from thumbnails (heuristic by default, optional OpenCV fallback plugin).
+- Generates snapshot PNG and daily digest reports.
 
 ## What Blinker does NOT do
 - No guaranteed live local LAN streaming.
 - No cloud AI dependency required.
 - No telemetry, scraping, or hidden outbound calls.
+
+## v0.2 feature highlights
+- Event tags table + rules table + notifications queue.
+- Search endpoint and timeline search UI.
+- Daily report endpoint (`/api/reports/daily`).
+- Snapshot v2 with important events and tags summary.
 
 ## Security and privacy notes
 - Secrets are never committed.
@@ -58,26 +65,14 @@ cd web; npm run dev
    - `BLINKER_OLLAMA_URL=http://localhost:11434`
    - `BLINKER_OLLAMA_MODEL=llama3.1`
 
-## API endpoints
-- `GET /api/health`
-- `POST /api/auth/login`
-- `POST /api/auth/verify-pin`
-- `POST /api/auth/logout`
-- `GET /api/cameras`
-- `GET /api/events?camera_id=&from=&to=`
-- `POST /api/sync/now`
-- `GET /api/clips?camera_id=&from=&to=`
-- `GET /api/clips/{clip_id}/file`
-- `POST /api/analyze/{event_id}`
-- `GET /api/snapshot.png`
-
 ## Troubleshooting
 - **2FA PIN errors:** retry with current PIN in setup page.
 - **Rate limits / delayed updates:** increase `BLINKER_POLL_SECONDS`.
 - **Empty timeline:** run `POST /api/sync/now` and verify credentials.
+- **No vision tags:** ensure thumbnails are downloaded; OpenCV is optional and heuristic mode still works.
 
 ## Release zip
 ```bash
 python scripts/make_release_zip.py
 ```
-Creates: `dist/blinker-github-ready.zip`
+Creates: `dist/blinker-v0.2-github-ready.zip`

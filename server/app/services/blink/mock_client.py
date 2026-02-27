@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime, timedelta, timezone
 from .client import BlinkCamera, BlinkClip, BlinkClient, BlinkEvent, PinRequiredError
 
@@ -55,4 +56,6 @@ class MockBlinkClient(BlinkClient):
         return f'clip-bytes-{clip_id}'.encode()
 
     async def download_thumbnail(self, event_id: str):
-        return f'thumb-bytes-{event_id}'.encode()
+        # 1x1 PNG to keep tests deterministic and valid for Pillow analysis.
+        png_b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jk3sAAAAASUVORK5CYII='
+        return base64.b64decode(png_b64)
