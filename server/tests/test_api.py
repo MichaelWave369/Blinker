@@ -1,15 +1,20 @@
-import pytest
 import os
+import uuid
+import pytest
 
 os.environ['BLINKER_USE_MOCK'] = 'true'
-os.environ['BLINKER_DB_PATH'] = 'server/data/test-blinker.db'
-
 pytest.importorskip('fastapi')
+
 from fastapi.testclient import TestClient
 from app.main import create_app
 
 
+def _fresh_db_path() -> str:
+    return f'server/data/test-blinker-{uuid.uuid4().hex}.db'
+
+
 def test_health():
+    os.environ['BLINKER_DB_PATH'] = _fresh_db_path()
     with TestClient(create_app()) as client:
         resp = client.get('/api/health')
         assert resp.status_code == 200
@@ -17,6 +22,7 @@ def test_health():
 
 
 def test_list_cameras_after_sync():
+    os.environ['BLINKER_DB_PATH'] = _fresh_db_path()
     with TestClient(create_app()) as client:
         client.post('/api/sync/now')
         resp = client.get('/api/cameras')
@@ -26,6 +32,7 @@ def test_list_cameras_after_sync():
 
 
 def test_sync_stores_events_and_search():
+    os.environ['BLINKER_DB_PATH'] = _fresh_db_path()
     with TestClient(create_app()) as client:
         resp = client.post('/api/sync/now')
         assert resp.status_code == 200
@@ -38,6 +45,7 @@ def test_sync_stores_events_and_search():
 
 
 def test_snapshot_png_and_daily_report():
+    os.environ['BLINKER_DB_PATH'] = _fresh_db_path()
     with TestClient(create_app()) as client:
         client.post('/api/sync/now')
         resp = client.get('/api/snapshot.png')

@@ -1,14 +1,20 @@
-import pytest
 import os
+import uuid
+from datetime import datetime, timezone
+import pytest
 
 os.environ['BLINKER_USE_MOCK'] = 'true'
-os.environ['BLINKER_DB_PATH'] = 'server/data/test-blinker.db'
-
 pytest.importorskip('fastapi')
+
 from fastapi.testclient import TestClient
 from app.main import create_app
 from app.services.ai.vision import HeuristicVisionAnalyzer
 from PIL import Image
+from app.services.blink.client import BlinkEvent
+
+
+def _fresh_db_path() -> str:
+    return f'server/data/test-blinker-{uuid.uuid4().hex}.db'
 
 
 def test_heuristic_vision_tags_are_deterministic(tmp_path):
@@ -26,6 +32,7 @@ def test_heuristic_vision_tags_are_deterministic(tmp_path):
 
 
 def test_rule_application_creates_notification():
+    os.environ['BLINKER_DB_PATH'] = _fresh_db_path()
     with TestClient(create_app()) as client:
         rule_payload = {
             'name': 'Night motion important',
@@ -37,6 +44,9 @@ def test_rule_application_creates_notification():
         create = client.post('/api/rules', json=rule_payload)
         assert create.status_code == 200
 
+        client.app.state.blink_client._events.append(
+            BlinkEvent('evt_rule_test', 'cam_driveway', datetime.now(timezone.utc), True, 'mock://thumb/evt_rule_test', None)
+        )
         client.post('/api/sync/now')
         notifications = client.get('/api/notifications')
         assert notifications.status_code == 200
