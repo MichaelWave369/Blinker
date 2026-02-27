@@ -56,3 +56,20 @@ def test_snapshot_png_and_daily_report():
         daily = client.get('/api/reports/daily')
         assert daily.status_code == 200
         assert 'motion_events' in daily.json()
+
+
+def test_assistant_feed_and_chat():
+    os.environ['BLINKER_DB_PATH'] = _fresh_db_path()
+    with TestClient(create_app()) as client:
+        client.post('/api/sync/now')
+        feed = client.get('/api/assistant/feed')
+        assert feed.status_code == 200
+        assert len(feed.json()) >= 1
+
+        reply = client.post('/api/assistant/messages', json={'content': 'What happened?'})
+        assert reply.status_code == 200
+        assert reply.json()['role'] == 'assistant'
+
+        messages = client.get('/api/assistant/messages')
+        assert messages.status_code == 200
+        assert len(messages.json()) >= 2

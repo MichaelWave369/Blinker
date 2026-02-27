@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .core.config import Settings
 from .core.logging import configure_logging
 from .deps import build_monitor_from_settings
-from .routers import analyze, auth, cameras, clips, events, health, notifications, reports, rules, snapshot, sync
+from .routers import analyze, assistant, auth, cameras, clips, events, health, notifications, reports, rules, snapshot, sync
 
 
 def create_app() -> FastAPI:
@@ -36,6 +36,7 @@ def create_app() -> FastAPI:
     app.include_router(clips.router)
     app.include_router(sync.router)
     app.include_router(analyze.router)
+    app.include_router(assistant.router)
     app.include_router(snapshot.router)
     app.include_router(rules.router)
     app.include_router(notifications.router)

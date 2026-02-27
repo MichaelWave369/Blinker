@@ -7,6 +7,7 @@ export function Nav() {
       <Link to="/dashboard">Dashboard</Link>
       <Link to="/timeline">Timeline</Link>
       <Link to="/settings">Settings</Link>
+      <Link to="/assistant">Assistant</Link>
       <Link to="/notifications">Notifications</Link>
       <Link to="/reports">Reports</Link>
     </nav>

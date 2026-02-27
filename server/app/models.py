@@ -66,3 +66,11 @@ class AuthSession(SQLModel, table=True):
     username: str
     token: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class AssistantMessage(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    role: str
+    content: str
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    source: str = 'chat'

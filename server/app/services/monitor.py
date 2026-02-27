@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from sqlmodel import Session, select
-from ..models import Camera, Clip, Event, EventTag
+from ..models import AssistantMessage, Camera, Clip, Event, EventTag
 from .media_store import MediaStore
 from .rules import RuleEngine
 
@@ -84,6 +84,7 @@ class MonitorService:
                         tags.append(vt)
 
                 self.rules.apply(session, db_evt, tags)
+                session.add(AssistantMessage(role='assistant', content=db_evt.summary or f'Motion event on {db_evt.camera_id}', source='event'))
                 created_events += 1
             session.commit()
         return {'status': 'synced', 'new_events': created_events}
